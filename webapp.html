@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Snake Game</title>
+  <style>
+    body {
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: #111;
+      color: white;
+      font-family: sans-serif;
+    }
+
+    canvas {
+      border: 2px solid white;
+      margin-top: 10px;
+      background: #222;
+    }
+
+    h1 {
+      margin-top: 20px;
+    }
+
+    .score {
+      margin-top: 10px;
+      font-size: 18px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🐍 Snake Game</h1>
+  <p>Use arrow keys to move. Eat red apples to grow!</p>
+  <div class="score">🍎 Apples Eaten: <span id="appleCount">0</span></div>
+  <canvas id="game" width="500" height="500"></canvas>
+
+  <script>
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
+    const appleCountDisplay = document.getElementById("appleCount");
+
+    const scale = 20;
+    const rows = canvas.height / scale;
+    const cols = canvas.width / scale;
+
+    let snake = [{ x: 5 * scale, y: 5 * scale }];
+    let direction = { x: 1, y: 0 };
+    let food = getRandomPosition();
+    let appleCount = 0;
+    let gameInterval;
+
+    function getRandomPosition() {
+      return {
+        x: Math.floor(Math.random() * cols) * scale,
+        y: Math.floor(Math.random() * rows) * scale
+      };
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const head = {
+        x: snake[0].x + direction.x * scale,
+        y: snake[0].y + direction.y * scale
+      };
+
+      snake.unshift(head);
+
+      if (head.x === food.x && head.y === food.y) {
+        food = getRandomPosition();
+        appleCount++;
+        appleCountDisplay.textContent = appleCount;
+      } else {
+        snake.pop(); // maintain length unless eating
+      }
+
+      // Draw food
+      ctx.fillStyle = "red";
+      ctx.fillRect(food.x, food.y, scale, scale);
+
+      // Draw snake
+      ctx.fillStyle = "lime";
+      snake.forEach(segment => {
+        ctx.fillRect(segment.x, segment.y, scale, scale);
+      });
+
+      if (isWallCollision(head) || isSelfCollision(head)) {
+        clearInterval(gameInterval);
+        setTimeout(() => {
+          if (confirm(`💀 Game Over!\nYou ate ${appleCount} apple${appleCount === 1 ? "" : "s"}.\nPlay again?`)) {
+            resetGame();
+          }
+        }, 100);
+      }
+    }
+
+    function isWallCollision(head) {
+      return (
+        head.x < 0 || head.x >= canvas.width ||
+        head.y < 0 || head.y >= canvas.height
+      );
+    }
+
+    function isSelfCollision(head) {
+      for (let i = 1; i < snake.length; i++) {
+        if (snake[i].x === head.x && snake[i].y === head.y) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    function resetGame() {
+      snake = [{ x: 5 * scale, y: 5 * scale }];
+      direction = { x: 1, y: 0 };
+      food = getRandomPosition();
+      appleCount = 0;
+      appleCountDisplay.textContent = appleCount;
+      gameInterval = setInterval(draw, 150); // slowed down by 50%
+    }
+
+    document.addEventListener("keydown", e => {
+      switch (e.key) {
+        case "ArrowUp":
+          if (direction.y === 0) direction = { x: 0, y: -1 };
+          break;
+        case "ArrowDown":
+          if (direction.y === 0) direction = { x: 0, y: 1 };
+          break;
+        case "ArrowLeft":
+          if (direction.x === 0) direction = { x: -1, y: 0 };
+          break;
+        case "ArrowRight":
+          if (direction.x === 0) direction = { x: 1, y: 0 };
+          break;
+      }
+    });
+
+    resetGame();
+  </script>
+  <a href="index.html"> Return to home <a/>
+</body>
+</html>
